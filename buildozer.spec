@@ -1,24 +1,50 @@
-[app]
-title = Easy Physics
-package.name = easyphysics
-package.domain = org.jazminess
+name: Build Kivy APK
 
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-version = 0.1
-requirements = python3,kivy
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-android.accept_sdk_license = True
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
 
-orientation = portrait
-fullscreen = 1
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
-android.api = 33
-android.minapi = 21
-android.ndk = 25b
-android.archs = arm64-v8a, armeabi-v7a
+      - name: Install Buildozer and Cython
+        run: |
+          pip install buildozer
+          pip install Cython==0.29.33
 
-[buildozer]
-log_level = 2
-warn_on_root = 1
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      - name: First Build (expected to fail on config.pxi)
+        run: |
+          buildozer android debug || true
+
+      - name: Inject pyjnius config.pxi
+        run: |
+          find .buildozer -type d -path "*pyjnius*/jnius" -exec sh -c 'echo "DEF JNIUS_PLATFORM = \"android\"" > "$1/config.pxi"' _ {} \;
+
+      - name: Second Build (should complete)
+        run: |
+          buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kivy-apk
+          path: bin/*.apk
