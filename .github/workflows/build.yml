@@ -31,12 +31,15 @@ jobs:
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Create pyjnius config.pxi
+      - name: First Build (expected to fail on config.pxi)
         run: |
-          mkdir -p .buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/pyjnius-sdl2/armeabi-v7a__ndk_target_21/pyjnius/jnius
-          echo "DEF JNIUS_PLATFORM = 'android'" > .buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/pyjnius-sdl2/armeabi-v7a__ndk_target_21/pyjnius/jnius/config.pxi
+          buildozer android debug || true
 
-      - name: Build with Buildozer
+      - name: Inject pyjnius config.pxi
+        run: |
+          find .buildozer -type d -path "*pyjnius*/jnius" -exec sh -c 'echo "DEF JNIUS_PLATFORM = \"android\"" > "$1/config.pxi"' _ {} \;
+
+      - name: Second Build (should complete)
         run: |
           buildozer android debug
 
