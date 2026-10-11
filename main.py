@@ -1006,13 +1006,19 @@ class HomeScreen(Screen):
         self.background.pos = self.pos
         self.background.size = self.size
 
-    def update_status(self, dt):
-        self.time_label.text = datetime.datetime.now().strftime("%I:%M %p")
-        battery = psutil.sensors_battery()
-        if battery and battery.percent is not None:
-            self.battery_label.text = f"{battery.percent}%"
-        else:
+   def update_status(self, dt):
+    self.time_label.text = datetime.datetime.now().strftime("%I:%M %p")
+    if HAS_PSUTIL:
+        try:
+            battery = psutil.sensors_battery()
+            if battery and battery.percent is not None:
+                self.battery_label.text = f"{battery.percent}%"
+            else:
+                self.battery_label.text = "N/A"
+        except Exception:
             self.battery_label.text = "N/A"
+    else:
+        self.battery_label.text = "N/A"
 
 
 
