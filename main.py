@@ -3,7 +3,11 @@ import io
 import re
 import math
 import datetime
-import psutil
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 from PIL import Image as _PILImage
 
 
