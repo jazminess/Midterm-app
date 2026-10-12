@@ -1,4 +1,5 @@
 [app]
+android.p4a_whitelist = hostpython3==3.11.9,python3==3.11.9
 title = Easy Physics
 package.name = easyphysics
 package.domain = org.jazminess
